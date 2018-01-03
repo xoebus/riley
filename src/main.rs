@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate itertools;
 extern crate permutohedron;
 
@@ -24,8 +25,8 @@ fn main() {
         process::exit(1)
     }
 
-    let target = args.pop().unwrap().parse().unwrap();
-    let mut numbers: Vec<i32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
+    let target: u32 = args.pop().unwrap().parse().unwrap();
+    let mut numbers: Vec<u32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
 
     let ops = [
         Operation::Add,
@@ -41,7 +42,8 @@ fn main() {
     let fifth = Repeater::new(ops.iter(), ops.len().pow(4)).cycle();
     let size = ops.len().pow(6);
 
-    let comb: Vec<_> = first.zip(second)
+    let all_operations: Vec<_> = first
+        .zip(second)
         .zip(third)
         .zip(fourth)
         .zip(fifth)
@@ -49,63 +51,58 @@ fn main() {
         .map(|((((a, b), c), d), e)| vec![a, b, c, d, e])
         .collect();
 
-    let number_permutations = Heap::new(&mut numbers);
-    for p in number_permutations {
-        solve(target, &p, comb.clone())
+    let all_numbers = Heap::new(&mut numbers);
+
+    for (numbers, operations) in iproduct!(all_numbers, all_operations) {
+        solve(target, numbers, operations)
     }
 }
 
-fn solve(
-    target: i32,
-    numbers: &[i32],
-    ops: Vec<Vec<&Operation>>,
-) -> () {
-    'outer: for mut os in ops {
-        let mut nums = numbers.to_vec();
-        let mut used = vec![];
+fn solve(target: u32, numbers: Vec<u32>, mut ops: Vec<&Operation>) -> () {
+    let mut nums = numbers.clone();
+    let mut used = vec![];
 
-        loop {
-            let fst = nums.pop().unwrap();
-            let snd = nums.pop();
+    loop {
+        let fst = nums.pop().unwrap();
+        let snd = nums.pop();
 
-            if snd.is_none() {
-                break;
-            }
-
-            let res = match os.pop() {
-                Some(&Operation::Add) => {
-                    used.push("+");
-                    fst + snd.unwrap()
-                }
-                Some(&Operation::Subtract) => {
-                    used.push("-");
-                    fst - snd.unwrap()
-                }
-                Some(&Operation::Multiply) => {
-                    used.push("*");
-                    fst * snd.unwrap()
-                }
-                Some(&Operation::Divide) => {
-                    if fst % snd.unwrap() != 0 {
-                        continue 'outer;
-                    }
-                    used.push("/");
-                    fst / snd.unwrap()
-                }
-                None => break,
-            };
-
-            if res == target {
-                show_result(res, &used, numbers);
-                process::exit(0)
-            }
-
-            nums.push(res)
+        if snd.is_none() {
+            return;
         }
+
+        let res = match ops.pop() {
+            Some(&Operation::Add) => {
+                used.push("+");
+                fst + snd.unwrap()
+            }
+            Some(&Operation::Subtract) => {
+                used.push("-");
+                fst - snd.unwrap()
+            }
+            Some(&Operation::Multiply) => {
+                used.push("*");
+                fst * snd.unwrap()
+            }
+            Some(&Operation::Divide) => {
+                if fst % snd.unwrap() != 0 {
+                    return;
+                }
+                used.push("/");
+                fst / snd.unwrap()
+            }
+            None => return,
+        };
+
+        if res == target {
+            show_result(res, &used, numbers);
+            process::exit(0)
+        }
+
+        nums.push(res)
     }
 }
 
-fn show_result(res: i32, used: &[&str], nums: &[i32]) -> () {
+fn show_result(res: u32, used: &[&str], nums: Vec<u32>) -> () {
     let mut n = nums.to_vec();
 
     let mut u = used.to_owned();
