@@ -25,7 +25,14 @@ fn main() {
         process::exit(1)
     }
 
-    let target: u32 = args.pop().unwrap().parse().unwrap();
+    let target = match args.pop().map(|a| a.parse()) {
+        Some(Ok(t)) => t,
+        _ => {
+            eprintln!("invalid target number");
+            process::exit(1)
+        }
+    };
+
     let mut numbers: Vec<u32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
 
     let ops = [
@@ -54,12 +61,12 @@ fn main() {
     let all_numbers = Heap::new(&mut numbers);
 
     for (numbers, operations) in iproduct!(all_numbers, all_operations) {
-        solve(target, numbers, operations)
+        solve(target, &numbers, operations)
     }
 }
 
-fn solve(target: u32, numbers: Vec<u32>, mut ops: Vec<&Operation>) -> () {
-    let mut nums = numbers.clone();
+fn solve(target: u32, numbers: &[u32], mut ops: Vec<&Operation>) -> () {
+    let mut nums = numbers.to_owned();
     let mut used = vec![];
 
     loop {
@@ -102,7 +109,7 @@ fn solve(target: u32, numbers: Vec<u32>, mut ops: Vec<&Operation>) -> () {
     }
 }
 
-fn show_result(res: u32, used: &[&str], nums: Vec<u32>) -> () {
+fn show_result(res: u32, used: &[&str], nums: &[u32]) -> () {
     let mut n = nums.to_vec();
 
     let mut u = used.to_owned();
