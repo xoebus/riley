@@ -1,0 +1,8 @@
+[package]
+name = "riley"
+version = "0.1.0"
+authors = ["Christopher Brown <chris@xoeb.us>"]
+
+[dependencies]
+itertools = "0.7.4"
+permutohedron = "0.2.4"
