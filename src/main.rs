@@ -1,11 +1,13 @@
 extern crate itertools;
 extern crate permutohedron;
 
+use std::process;
+use std::env;
+
 mod repeater;
+use repeater::Repeater;
 
 use permutohedron::Heap;
-use repeater::Repeater;
-use std::process;
 
 #[derive(Debug)]
 enum Operation {
@@ -16,43 +18,50 @@ enum Operation {
 }
 
 fn main() {
-    let a = [
+    let mut args: Vec<String> = env::args().collect();
+    if args.len() != 8 {
+        eprintln!("usage: riley nums... target");
+        process::exit(1)
+    }
+
+    let target = args.pop().unwrap().parse().unwrap();
+    let mut numbers: Vec<i32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
+
+    let ops = [
         Operation::Add,
         Operation::Subtract,
         Operation::Multiply,
         Operation::Divide,
     ];
 
-    let first = Repeater::new(a.iter(), a.len().pow(0)).cycle();
-    let second = Repeater::new(a.iter(), a.len().pow(1)).cycle();
-    let third = Repeater::new(a.iter(), a.len().pow(2)).cycle();
-    let fourth = Repeater::new(a.iter(), a.len().pow(3)).cycle();
-    let fifth = Repeater::new(a.iter(), a.len().pow(4)).cycle();
+    let first = Repeater::new(ops.iter(), ops.len().pow(0)).cycle();
+    let second = Repeater::new(ops.iter(), ops.len().pow(1)).cycle();
+    let third = Repeater::new(ops.iter(), ops.len().pow(2)).cycle();
+    let fourth = Repeater::new(ops.iter(), ops.len().pow(3)).cycle();
+    let fifth = Repeater::new(ops.iter(), ops.len().pow(4)).cycle();
+    let size = ops.len().pow(6);
 
-    let size = a.len().pow(5);
-
-    let comb: Vec<_> = itertools::multizip((first, second, third, fourth, fifth))
+    let comb: Vec<_> = first.zip(second)
+        .zip(third)
+        .zip(fourth)
+        .zip(fifth)
         .take(size)
+        .map(|((((a, b), c), d), e)| vec![a, b, c, d, e])
         .collect();
 
-    let mut data = [25, 50, 75, 100, 3, 6];
-    let target = 952;
-
-    let heap = Heap::new(&mut data);
-    for item in heap {
-        solve(target, &item, comb.clone())
+    let number_permutations = Heap::new(&mut numbers);
+    for p in number_permutations {
+        solve(target, &p, comb.clone())
     }
 }
 
 fn solve(
     target: i32,
     numbers: &[i32],
-    ops: Vec<(&Operation, &Operation, &Operation, &Operation, &Operation)>,
+    ops: Vec<Vec<&Operation>>,
 ) -> () {
-    'outer: for op_set in ops {
+    'outer: for mut os in ops {
         let mut nums = numbers.to_vec();
-        let mut os = vec![op_set.0, op_set.1, op_set.2, op_set.3, op_set.4];
-
         let mut used = vec![];
 
         loop {
