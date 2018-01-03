@@ -19,15 +19,16 @@ fn main() {
     let second = Repeater::new(a.iter(), a.len().pow(1)).cycle();
     let third = Repeater::new(a.iter(), a.len().pow(2)).cycle();
     let fourth = Repeater::new(a.iter(), a.len().pow(3)).cycle();
+    let fifth = Repeater::new(a.iter(), a.len().pow(4)).cycle();
 
     let size = a.len().pow(5);
 
-    let comb: Vec<_> = itertools::multizip((first, second, third, fourth))
+    let comb: Vec<_> = itertools::multizip((first, second, third, fourth, fifth))
         .take(size)
         .collect();
 
-    let mut data = [25, 25, 3, 8, 5, 4];
-    let solution = 345;
+    let mut data = [25, 75, 100, 3, 9, 5];
+    let solution = 601;
 
     let heap = Heap::new(&mut data);
     for item in heap {
@@ -35,10 +36,10 @@ fn main() {
     }
 }
 
-fn solve(target: i32, numbers: &[i32], ops: Vec<(&Operation, &Operation, &Operation, &Operation)>) -> () {
+fn solve(target: i32, numbers: &[i32], ops: Vec<(&Operation, &Operation, &Operation, &Operation, &Operation)>) -> () {
     'outer: for op_set in ops {
         let mut nums = numbers.clone().to_vec();
-        let mut os = vec!(op_set.0, op_set.1, op_set.2, op_set.3);
+        let mut os = vec!(op_set.0, op_set.1, op_set.2, op_set.3, op_set.4);
 
         let mut used = vec!();
 
