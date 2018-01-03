@@ -7,18 +7,25 @@ pub struct Repeater<I: Iterator> {
     done: usize,
 }
 
-impl<I> Repeater<I> where I: Clone + Iterator {
+impl<I> Repeater<I>
+where
+    I: Clone + Iterator,
+{
     pub fn new(it: I, dups: usize) -> Self {
-        return Repeater{
+        return Repeater {
             iter: it,
             dups: dups,
             curr: None,
             done: 0,
-        }
+        };
     }
 }
 
-impl<I> Iterator for Repeater<I> where I: Clone + Iterator, I::Item: Clone {
+impl<I> Iterator for Repeater<I>
+where
+    I: Clone + Iterator,
+    I::Item: Clone,
+{
     type Item = <I as Iterator>::Item;
 
     #[inline]

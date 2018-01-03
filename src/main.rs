@@ -16,7 +16,12 @@ enum Operation {
 }
 
 fn main() {
-    let a = [Operation::Add, Operation::Subtract, Operation::Multiply, Operation::Divide];
+    let a = [
+        Operation::Add,
+        Operation::Subtract,
+        Operation::Multiply,
+        Operation::Divide,
+    ];
 
     let first = Repeater::new(a.iter(), a.len().pow(0)).cycle();
     let second = Repeater::new(a.iter(), a.len().pow(1)).cycle();
@@ -39,26 +44,30 @@ fn main() {
     }
 }
 
-fn solve(target: i32, numbers: &[i32], ops: Vec<(&Operation, &Operation, &Operation, &Operation, &Operation)>) -> () {
+fn solve(
+    target: i32,
+    numbers: &[i32],
+    ops: Vec<(&Operation, &Operation, &Operation, &Operation, &Operation)>,
+) -> () {
     'outer: for op_set in ops {
         let mut nums = numbers.clone().to_vec();
-        let mut os = vec!(op_set.0, op_set.1, op_set.2, op_set.3, op_set.4);
+        let mut os = vec![op_set.0, op_set.1, op_set.2, op_set.3, op_set.4];
 
-        let mut used = vec!();
+        let mut used = vec![];
 
         loop {
             let fst = nums.pop().unwrap();
             let snd = nums.pop();
 
             if snd.is_none() {
-                break
+                break;
             }
 
             let res = match os.pop() {
                 Some(&Operation::Add) => {
                     used.push("+");
                     fst + snd.unwrap()
-                },
+                }
                 Some(&Operation::Subtract) => {
                     used.push("-");
                     fst - snd.unwrap()
@@ -66,15 +75,15 @@ fn solve(target: i32, numbers: &[i32], ops: Vec<(&Operation, &Operation, &Operat
                 Some(&Operation::Multiply) => {
                     used.push("*");
                     fst * snd.unwrap()
-                },
+                }
                 Some(&Operation::Divide) => {
                     if fst % snd.unwrap() != 0 {
                         continue 'outer;
                     }
                     used.push("/");
                     fst / snd.unwrap()
-                },
-                None => break
+                }
+                None => break,
             };
 
             if res == target {
@@ -93,8 +102,13 @@ fn show_result(res: i32, used: &Vec<&str>, nums: &[i32]) -> () {
     let mut u = used.clone();
     u.reverse();
 
-    let mut exps = vec!();
-    exps.push(format!("({} {} {})", n.pop().unwrap(), u.pop().unwrap(), n.pop().unwrap()));
+    let mut exps = vec![];
+    exps.push(format!(
+        "({} {} {})",
+        n.pop().unwrap(),
+        u.pop().unwrap(),
+        n.pop().unwrap()
+    ));
 
     while n.len() > 0 && u.len() > 0 {
         let e = exps.pop().unwrap();
@@ -104,4 +118,3 @@ fn show_result(res: i32, used: &Vec<&str>, nums: &[i32]) -> () {
 
     println!("{} = {}", exps.pop().unwrap(), res)
 }
-
