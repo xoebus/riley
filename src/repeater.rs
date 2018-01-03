@@ -2,7 +2,6 @@
 pub struct Repeater<I: Iterator> {
     iter: I,
     dups: usize,
-
     curr: Option<I::Item>,
     done: usize,
 }
@@ -12,12 +11,12 @@ where
     I: Clone + Iterator,
 {
     pub fn new(it: I, dups: usize) -> Self {
-        return Repeater {
+        Repeater {
             iter: it,
             dups: dups,
             curr: None,
             done: 0,
-        };
+        }
     }
 }
 

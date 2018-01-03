@@ -35,12 +35,12 @@ fn main() {
         .take(size)
         .collect();
 
-    let mut data = [25, 75, 100, 3, 9, 5];
-    let solution = 601;
+    let mut data = [25, 50, 75, 100, 3, 6];
+    let target = 952;
 
     let heap = Heap::new(&mut data);
     for item in heap {
-        solve(solution, &item, comb.clone())
+        solve(target, &item, comb.clone())
     }
 }
 
@@ -50,7 +50,7 @@ fn solve(
     ops: Vec<(&Operation, &Operation, &Operation, &Operation, &Operation)>,
 ) -> () {
     'outer: for op_set in ops {
-        let mut nums = numbers.clone().to_vec();
+        let mut nums = numbers.to_vec();
         let mut os = vec![op_set.0, op_set.1, op_set.2, op_set.3, op_set.4];
 
         let mut used = vec![];
@@ -96,10 +96,10 @@ fn solve(
     }
 }
 
-fn show_result(res: i32, used: &Vec<&str>, nums: &[i32]) -> () {
+fn show_result(res: i32, used: &[&str], nums: &[i32]) -> () {
     let mut n = nums.to_vec();
 
-    let mut u = used.clone();
+    let mut u = used.to_owned();
     u.reverse();
 
     let mut exps = vec![];
@@ -110,7 +110,7 @@ fn show_result(res: i32, used: &Vec<&str>, nums: &[i32]) -> () {
         n.pop().unwrap()
     ));
 
-    while n.len() > 0 && u.len() > 0 {
+    while !n.is_empty() && !u.is_empty() {
         let e = exps.pop().unwrap();
 
         exps.push(format!("({} {} {})", e, u.pop().unwrap(), n.pop().unwrap()));
