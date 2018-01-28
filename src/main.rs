@@ -33,7 +33,7 @@ fn main() {
         }
     };
 
-    let mut numbers: Vec<u32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
+    let mut numbers: Vec<i32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
 
     let ops = [
         Operation::Add,
@@ -65,7 +65,7 @@ fn main() {
     }
 }
 
-fn solve(target: u32, numbers: &[u32], mut ops: Vec<&Operation>) -> () {
+fn solve(target: i32, numbers: &[i32], mut ops: Vec<&Operation>) -> () {
     let mut nums = numbers.to_owned();
     let mut used = vec![];
 
@@ -109,7 +109,7 @@ fn solve(target: u32, numbers: &[u32], mut ops: Vec<&Operation>) -> () {
     }
 }
 
-fn show_result(res: u32, used: &[&str], nums: &[u32]) -> () {
+fn show_result(res: i32, used: &[&str], nums: &[i32]) -> () {
     let mut n = nums.to_vec();
 
     let mut u = used.to_owned();
