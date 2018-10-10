@@ -3,6 +3,7 @@ extern crate itertools;
 extern crate permutohedron;
 
 use std::env;
+use std::fmt;
 use std::process;
 
 use itertools::Itertools;
@@ -16,29 +17,32 @@ enum Operator {
     Divide,
 }
 
+impl fmt::Display for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let op = match self {
+            Operator::Add => "+",
+            Operator::Subtract => "-",
+            Operator::Multiply => "*",
+            Operator::Divide => "/",
+        };
+        write!(f, "{}", op)
+    }
+}
+
 struct Attempt {
     nums: Vec<i32>,
     ops: Vec<Operator>,
 }
 
 fn main() {
-    let mut args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
     if args.len() != 8 {
         eprintln!("usage: riley nums... target");
         process::exit(1)
     }
 
-    let target = match args.pop().map(|a| a.parse()) {
-        Some(Ok(t)) => t,
-        _ => {
-            eprintln!("invalid target number");
-            process::exit(1)
-        }
-    };
-
-    let mut numbers: Vec<i32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
-    let operator_count = numbers.len() - 1;
-
+    let mut numbers: Vec<i32> = args.iter().filter_map(|v| v.parse().ok()).collect();
+    let target = numbers.pop().unwrap();
     let number_permutations = Heap::new(&mut numbers);
 
     let operators = vec![
@@ -47,7 +51,7 @@ fn main() {
         Operator::Multiply,
         Operator::Divide,
     ];
-    let operator_product = itertools::repeat_n(operators, operator_count).multi_cartesian_product();
+    let operator_product = itertools::repeat_n(operators, 5).multi_cartesian_product();
 
     let attempts =
         iproduct!(number_permutations, operator_product).map(|(nums, ops)| Attempt { nums, ops });
@@ -69,15 +73,7 @@ fn display(attempt: &Attempt, size: usize, answer: i32) {
     for op in &attempt.ops[..size] {
         let x = exprs.pop().unwrap();
         let y = exprs.pop().unwrap();
-
-        let res = match op {
-            Operator::Add => format!("({} + {})", x, y),
-            Operator::Subtract => format!("({} - {})", x, y),
-            Operator::Multiply => format!("({} * {})", x, y),
-            Operator::Divide => format!("({} / {})", x, y),
-        };
-
-        exprs.push(res)
+        exprs.push(format!("({} {} {})", x, op, y))
     }
 
     println!("{} = {}", exprs.pop().unwrap(), answer)
