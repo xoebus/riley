@@ -2,20 +2,23 @@
 extern crate itertools;
 extern crate permutohedron;
 
-use std::process;
 use std::env;
+use std::process;
 
-mod repeater;
-use repeater::Repeater;
-
+use itertools::Itertools;
 use permutohedron::Heap;
 
-#[derive(Debug)]
-enum Operation {
+#[derive(Clone, Debug)]
+enum Operator {
     Add,
     Subtract,
     Multiply,
     Divide,
+}
+
+struct Attempt {
+    nums: Vec<i32>,
+    ops: Vec<Operator>,
 }
 
 fn main() {
@@ -33,101 +36,88 @@ fn main() {
         }
     };
 
-    let mut numbers: Vec<i64> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
+    let mut numbers: Vec<i32> = args.iter().skip(1).filter_map(|v| v.parse().ok()).collect();
+    let operator_count = numbers.len() - 1;
 
-    let ops = [
-        Operation::Add,
-        Operation::Subtract,
-        Operation::Multiply,
-        Operation::Divide,
+    let number_permutations = Heap::new(&mut numbers);
+
+    let operators = vec![
+        Operator::Add,
+        Operator::Subtract,
+        Operator::Multiply,
+        Operator::Divide,
     ];
+    let operator_product = itertools::repeat_n(operators, operator_count).multi_cartesian_product();
 
-    let first = Repeater::new(ops.iter(), ops.len().pow(0)).cycle();
-    let second = Repeater::new(ops.iter(), ops.len().pow(1)).cycle();
-    let third = Repeater::new(ops.iter(), ops.len().pow(2)).cycle();
-    let fourth = Repeater::new(ops.iter(), ops.len().pow(3)).cycle();
-    let fifth = Repeater::new(ops.iter(), ops.len().pow(4)).cycle();
-    let size = ops.len().pow(6);
+    let attempts =
+        iproduct!(number_permutations, operator_product).map(|(nums, ops)| Attempt { nums, ops });
 
-    let all_operations: Vec<_> = first
-        .zip(second)
-        .zip(third)
-        .zip(fourth)
-        .zip(fifth)
-        .take(size)
-        .map(|((((a, b), c), d), e)| vec![a, b, c, d, e])
-        .collect();
-
-    let all_numbers = Heap::new(&mut numbers);
-
-    for (numbers, operations) in iproduct!(all_numbers, all_operations) {
-        solve(target, &numbers, operations)
+    for attempt in attempts {
+        if let Some(n) = solve(&attempt, target) {
+            display(&attempt, n, target);
+            break;
+        }
     }
 }
 
-fn solve(target: i64, numbers: &[i64], mut ops: Vec<&Operation>) -> () {
-    let mut nums = numbers.to_owned();
-    let mut used = vec![];
+fn display(attempt: &Attempt, size: usize, answer: i32) {
+    let mut exprs = Vec::new();
+    for num in &attempt.nums {
+        exprs.push(format!("{}", num))
+    }
 
-    loop {
-        let fst = nums.pop().unwrap();
-        let snd = nums.pop();
+    for op in &attempt.ops[..size] {
+        let x = exprs.pop().unwrap();
+        let y = exprs.pop().unwrap();
 
-        if snd.is_none() {
-            return;
-        }
-
-        let res = match ops.pop() {
-            Some(&Operation::Add) => {
-                used.push("+");
-                fst + snd.unwrap()
-            }
-            Some(&Operation::Subtract) => {
-                used.push("-");
-                fst - snd.unwrap()
-            }
-            Some(&Operation::Multiply) => {
-                used.push("*");
-                fst * snd.unwrap()
-            }
-            Some(&Operation::Divide) => {
-                if fst % snd.unwrap() != 0 {
-                    return;
-                }
-                used.push("/");
-                fst / snd.unwrap()
-            }
-            None => return,
+        let res = match op {
+            Operator::Add => format!("({} + {})", x, y),
+            Operator::Subtract => format!("({} - {})", x, y),
+            Operator::Multiply => format!("({} * {})", x, y),
+            Operator::Divide => format!("({} / {})", x, y),
         };
 
-        if res == target {
-            show_result(res, &used, numbers);
-            process::exit(0)
-        }
-
-        nums.push(res)
+        exprs.push(res)
     }
+
+    println!("{} = {}", exprs.pop().unwrap(), answer)
 }
 
-fn show_result(res: i64, used: &[&str], nums: &[i64]) -> () {
-    let mut n = nums.to_vec();
+fn solve(attempt: &Attempt, target: i32) -> Option<usize> {
+    let mut stack = attempt.nums.clone();
 
-    let mut u = used.to_owned();
-    u.reverse();
+    let mut n = 0;
+    for op in &attempt.ops {
+        let x = stack.pop().unwrap();
+        let y = stack.pop().unwrap();
 
-    let mut exps = vec![];
-    exps.push(format!(
-        "({} {} {})",
-        n.pop().unwrap(),
-        u.pop().unwrap(),
-        n.pop().unwrap()
-    ));
+        let res = match op {
+            Operator::Add => x + y,
+            Operator::Subtract => x - y,
+            Operator::Multiply => x * y,
+            Operator::Divide => {
+                if x % y != 0 {
+                    return None;
+                }
 
-    while !n.is_empty() && !u.is_empty() {
-        let e = exps.pop().unwrap();
+                x / y
+            }
+        };
+        n += 1;
 
-        exps.push(format!("({} {} {})", e, u.pop().unwrap(), n.pop().unwrap()));
+        if res <= 0 {
+            return None;
+        }
+
+        if res == target {
+            return Some(n);
+        }
+
+        stack.push(res)
     }
 
-    println!("{} = {}", exps.pop().unwrap(), res)
+    match stack.pop() {
+        Some(x) if x == target => Some(n),
+        _ => None,
+    }
 }
